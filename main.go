@@ -6,13 +6,16 @@ import (
 	"io/ioutil"
 	"log"
 	"smail/util"
+	"strings"
 
 	"crypto/tls"
 
 	"gopkg.in/gomail.v2"
-	// Если надо парсить
-	//"strings"
 )
+
+func Split(r rune) bool {
+	return r == ';'
+}
 
 func main() {
 	toMail := flag.String("to", "", "input path")
@@ -21,9 +24,14 @@ func main() {
 	mailAttach := flag.String("att", "", "Attach file")
 	flag.Parse()
 
-	// Парсим строку с адресами электронной почты вида "info@gmail.com;result@gmail.com"
-	// var toMail1 = strings.Split(*toMail, ";")
-	// LoadConfig reads configuration from file or environment variables.
+	toMailValue := *toMail
+	mailAttachValue := *mailAttach
+	toMailArr := strings.FieldsFunc(toMailValue, Split)
+	mailAttachArr := strings.FieldsFunc(mailAttachValue, Split)
+
+	for i := 0; i < len(toMailArr); i++ {
+
+	}
 
 	config, err := util.LoadConfig(".")
 	if err != nil {
@@ -36,26 +44,27 @@ func main() {
 		return
 	}
 
-	// fmt.Println(config.Server)
-	m := gomail.NewMessage(gomail.SetCharset("UTF-8"))
-	// m := gomail.NewMessage()
-	m.SetHeader("From", config.From)
-	// Если нужно несколько получателей
-	//m.SetHeader("To", toMail1...)
-	m.SetHeader("To", *toMail)
-	m.SetHeader("Subject", *subjMail)
-	m.SetBody("text/html", string(result))
-	if *mailAttach != "" {
-		m.Attach(*mailAttach)
-	}
-
 	d := gomail.NewDialer(config.Server, config.Port, config.Login, config.Password)
 	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-	// d.TLSConfig = &tls.Config{ServerName: "MOS160.moscow.eurochem.ru", InsecureSkipVerify: false}
 
-	if err := d.DialAndSend(m); err != nil {
-		// panic(err)
-		fmt.Println(err)
+	m := gomail.NewMessage(gomail.SetCharset("UTF-8"))
+	for _, r := range toMailArr {
+		m.SetHeader("From", config.From)
+		m.SetHeader("To", r)
+		m.SetHeader("Subject", *subjMail)
+		m.SetBody("text/html", string(result))
+		if len(mailAttachArr) > 0 {
+			for i := 0; i < len(mailAttachArr); i++ {
+				m.Attach(mailAttachArr[i])
+			}
+
+		}
+		if err := d.DialAndSend(m); err != nil {
+			// panic(err)
+			fmt.Println(err)
+		}
+
+		m.Reset()
 	}
 
 }
