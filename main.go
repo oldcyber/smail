@@ -18,10 +18,10 @@ func Split(r rune) bool {
 }
 
 func main() {
-	toMail := flag.String("to", "", "input path")
+	toMail := flag.String("to", "", "input path (split with ';')")
 	subjMail := flag.String("subj", "", "output path")
 	mailBody := flag.String("data", "", "Mail Message")
-	mailAttach := flag.String("att", "", "Attach file")
+	mailAttach := flag.String("att", "", "Attach file (split with ';')")
 	flag.Parse()
 
 	toMailValue := *toMail
@@ -54,9 +54,12 @@ func main() {
 		m.SetHeader("Subject", *subjMail)
 		m.SetBody("text/html", string(result))
 		if len(mailAttachArr) > 0 {
-			for i := 0; i < len(mailAttachArr); i++ {
-				m.Attach(mailAttachArr[i])
+			for _, i := range mailAttachArr {
+				m.Attach(i)
 			}
+			// for i := 0; i < len(mailAttachArr); i++ {
+			// 	m.Attach(mailAttachArr[i])
+			// }
 
 		}
 		if err := d.DialAndSend(m); err != nil {
